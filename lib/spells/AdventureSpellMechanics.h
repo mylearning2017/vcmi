@@ -12,6 +12,8 @@
 
 #include "ISpellMechanics.h"
 
+class CGTownInstance;
+
 enum class ESpellCastResult
 {
 	OK,
@@ -60,6 +62,9 @@ public:
 	TownPortalMechanics(CSpell * s): AdventureSpellMechanics(s){};
 protected:
 	ESpellCastResult applyAdventureEffects(const SpellCastEnvironment * env, AdventureSpellCastParameters & parameters) const override;
+private:
+	const CGTownInstance * findNearestTown(const SpellCastEnvironment * env, AdventureSpellCastParameters & parameters, const std::vector <const CGTownInstance*> & pool) const;
+	std::vector <const CGTownInstance*> getPossibleTowns(const SpellCastEnvironment * env, AdventureSpellCastParameters & parameters) const;
 };
 
 class DLL_LINKAGE ViewMechanics : public AdventureSpellMechanics

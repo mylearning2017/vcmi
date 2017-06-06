@@ -282,65 +282,85 @@ ESpellCastResult DimensionDoorMechanics::applyAdventureEffects(const SpellCastEn
 ///TownPortalMechanics
 ESpellCastResult TownPortalMechanics::applyAdventureEffects(const SpellCastEnvironment * env, AdventureSpellCastParameters& parameters) const
 {
-	if (!env->getMap()->isInTheMap(parameters.pos))
-	{
-		env->complain("Destination tile not present!");
-		return ESpellCastResult::ERROR;
-	}
+	const CGTownInstance * destination = nullptr;
+	const int movementCost = GameConstants::BASE_MOVEMENT_COST * ((parameters.caster->getSpellSchoolLevel(owner) >= 3) ? 2 : 3);
 
-	TerrainTile tile = env->getMap()->getTile(parameters.pos);
-	if (tile.visitableObjects.empty() || tile.visitableObjects.back()->ID != Obj::TOWN)
-	{
-		env->complain("Town not found for Town Portal!");
-		return ESpellCastResult::ERROR;
-	}
+    if(parameters.caster->getSpellSchoolLevel(owner) < 2)
+    {
+		std::vector <const CGTownInstance*> pool = getPossibleTowns(env, parameters);
+		destination = findNearestTown(env, parameters, pool);
 
-	CGTownInstance * town = static_cast<CGTownInstance*>(tile.visitableObjects.back());
-
-	const auto relations = env->getCb()->getPlayerRelations(town->tempOwner, parameters.caster->tempOwner);
-
-	if(relations == PlayerRelations::ENEMIES)
-	{
-		env->complain("Can't teleport to enemy!");
-		return ESpellCastResult::ERROR;
-	}
-
-	if (town->visitingHero)
-	{
-		env->complain("Can't teleport to occupied town!");
-		return ESpellCastResult::ERROR;
-	}
-
-	if (parameters.caster->getSpellSchoolLevel(owner) < 2)
-	{
-		si32 dist = town->pos.dist2dSQ(parameters.caster->pos);
-		ObjectInstanceID nearest = town->id; //nearest town's ID
-		for(const CGTownInstance * currTown : env->getCb()->getPlayer(parameters.caster->tempOwner)->towns)
+		if(nullptr == destination)
 		{
-			si32 currDist = currTown->pos.dist2dSQ(parameters.caster->pos);
-			if (currDist < dist)
-			{
-				nearest = currTown->id;
-				dist = currDist;
-			}
+			InfoWindow iw;
+			iw.player = parameters.caster->tempOwner;
+			iw.text.addTxt(MetaString::GENERAL_TXT, 124);
+			env->sendAndApply(&iw);
+			return ESpellCastResult::CANCEL;
 		}
-		if (town->id != nearest)
+
+		if(parameters.caster->movement < movementCost)
 		{
-			env->complain("This hero can only teleport to nearest town!");
+			InfoWindow iw;
+			iw.player = parameters.caster->tempOwner;
+			iw.text.addTxt(MetaString::GENERAL_TXT, 125);
+			env->sendAndApply(&iw);
+			return ESpellCastResult::CANCEL;
+		}
+
+		if (destination->visitingHero)
+		{
+			InfoWindow iw;
+			iw.player = parameters.caster->tempOwner;
+			iw.text.addTxt(MetaString::GENERAL_TXT, 123);
+			env->sendAndApply(&iw);
+			return ESpellCastResult::CANCEL;
+		}
+    }
+    else if(env->getMap()->isInTheMap(parameters.pos))
+	{
+		const TerrainTile & tile = env->getMap()->getTile(parameters.pos);
+		if (tile.visitableObjects.empty() || tile.visitableObjects.back()->ID != Obj::TOWN)
+		{
+			env->complain("No town at destination tile");
 			return ESpellCastResult::ERROR;
 		}
 
+		destination = dynamic_cast<CGTownInstance*>(tile.visitableObjects.back());
+
+		if(nullptr == destination)
+		{
+			env->complain("[Internal error] invalid town object");
+			return ESpellCastResult::ERROR;
+		}
+
+		const auto relations = env->getCb()->getPlayerRelations(destination->tempOwner, parameters.caster->tempOwner);
+
+		if(relations == PlayerRelations::ENEMIES)
+		{
+			env->complain("Can't teleport to enemy!");
+			return ESpellCastResult::ERROR;
+		}
+
+		if(parameters.caster->movement < movementCost)
+		{
+			env->complain("This hero has not enough movement points!");
+			return ESpellCastResult::ERROR;
+		}
+
+		if (destination->visitingHero)
+		{
+			env->complain("Can't teleport to occupied town!");
+			return ESpellCastResult::ERROR;
+		}
 	}
-
-	const int movementCost = GameConstants::BASE_MOVEMENT_COST * ((parameters.caster->getSpellSchoolLevel(owner) >= 3) ? 2 : 3);
-
-	if(parameters.caster->movement < movementCost)
+	else
 	{
-		env->complain("This hero has not enough movement points!");
+		env->complain("Invalid destination tile");
 		return ESpellCastResult::ERROR;
 	}
 
-	if(env->moveHero(parameters.caster->id, town->visitablePos() + parameters.caster->getVisitableOffset() ,1))
+	if(env->moveHero(parameters.caster->id, destination->visitablePos() + parameters.caster->getVisitableOffset() ,1))
 	{
 		SetMovePoints smp;
 		smp.hid = parameters.caster->id;
@@ -348,6 +368,43 @@ ESpellCastResult TownPortalMechanics::applyAdventureEffects(const SpellCastEnvir
 		env->sendAndApply(&smp);
 	}
 	return ESpellCastResult::OK;
+}
+
+const CGTownInstance * TownPortalMechanics::findNearestTown(const SpellCastEnvironment* env, AdventureSpellCastParameters& parameters, const std::vector <const CGTownInstance*> & pool) const
+{
+	if(pool.empty())
+		return nullptr;
+
+	auto nearest = pool.cbegin(); //nearest town's iterator
+	si32 dist = (*nearest)->pos.dist2dSQ(parameters.caster->pos);
+
+	for (auto i = nearest + 1; i != pool.cend(); ++i)
+	{
+		si32 curDist = (*i)->pos.dist2dSQ(parameters.caster->pos);
+
+		if (curDist < dist)
+		{
+			nearest = i;
+			dist = curDist;
+		}
+	}
+	return *nearest;
+}
+
+std::vector <const CGTownInstance*> TownPortalMechanics::getPossibleTowns(const SpellCastEnvironment* env, AdventureSpellCastParameters& parameters) const
+{
+	std::vector <const CGTownInstance*> ret;
+
+	const TeamState * team = env->getCb()->getPlayerTeam(parameters.caster->getOwner());
+
+	for(const auto & color : team->players)
+	{
+		for(auto currTown : env->getCb()->getPlayer(color)->towns)
+		{
+			ret.push_back(currTown.get());
+		}
+	}
+	return ret;
 }
 
 ESpellCastResult ViewMechanics::applyAdventureEffects(const SpellCastEnvironment * env, AdventureSpellCastParameters & parameters) const
