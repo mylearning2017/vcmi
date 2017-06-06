@@ -722,18 +722,6 @@ void CSpellWindow::SpellArea::clickLeft(tribool down, bool previousState)
 				return;
 			}
 
-			if(mySpell->id == SpellID::SUMMON_BOAT)
-			{
-				//special case
-				//todo: move to mechanics
-				int3 pos = h->bestLocation();
-				if(pos.x < 0)
-				{
-					owner->myInt->showInfoDialog(CGI->generaltexth->allTexts[334]); //There is no place to put the boat.
-					return;
-				}
-			}
-
 			if(mySpell->getTargetType() == CSpell::LOCATION)
 			{
 				adventureInt->enterCastingMode(mySpell);

@@ -107,7 +107,18 @@ ESpellCastResult AdventureSpellMechanics::applyAdventureEffects(const SpellCastE
 ///SummonBoatMechanics
 ESpellCastResult SummonBoatMechanics::applyAdventureEffects(const SpellCastEnvironment * env, AdventureSpellCastParameters & parameters) const
 {
+	int3 summonPos = parameters.caster->bestLocation();
+	if(summonPos.x < 0)
+	{
+		InfoWindow iw;
+		iw.player = parameters.caster->tempOwner;
+		iw.text.addTxt(MetaString::GENERAL_TXT, 334);//There is no place to put the boat.
+		env->sendAndApply(&iw);
+		return ESpellCastResult::CANCEL;
+	}
+
 	const int schoolLevel = parameters.caster->getSpellSchoolLevel(owner);
+
 	//check if spell works at all
 	if(env->getRandomGenerator().nextInt(99) >= owner->getPower(schoolLevel)) //power is % chance of success
 	{
@@ -122,13 +133,6 @@ ESpellCastResult SummonBoatMechanics::applyAdventureEffects(const SpellCastEnvir
 	//try to find unoccupied boat to summon
 	const CGBoat * nearest = nullptr;
 	double dist = 0;
-	int3 summonPos = parameters.caster->bestLocation();
-	if(summonPos.x < 0)
-	{
-		env->complain("There is no water tile available!");
-		return ESpellCastResult::ERROR;
-	}
-
 	for(const CGObjectInstance * obj : env->getMap()->objects)
 	{
 		if(obj && obj->ID == Obj::BOAT)
@@ -150,7 +154,7 @@ ESpellCastResult SummonBoatMechanics::applyAdventureEffects(const SpellCastEnvir
 	{
 		ChangeObjPos cop;
 		cop.objid = nearest->id;
-		cop.nPos = summonPos + int3(1,0,0);;
+		cop.nPos = summonPos + int3(1,0,0);
 		cop.flags = 1;
 		env->sendAndApply(&cop);
 	}
@@ -166,7 +170,7 @@ ESpellCastResult SummonBoatMechanics::applyAdventureEffects(const SpellCastEnvir
 		NewObject no;
 		no.ID = Obj::BOAT;
 		no.subID = parameters.caster->getBoatType();
-		no.pos = summonPos + int3(1,0,0);;
+		no.pos = summonPos + int3(1,0,0);
 		env->sendAndApply(&no);
 	}
 	return ESpellCastResult::OK;
