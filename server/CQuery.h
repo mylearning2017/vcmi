@@ -15,8 +15,8 @@ typedef std::shared_ptr<CQuery> QueryPtr;
 // This class represents any kind of prolonged interaction that may need to do something special after it is over.
 // It does not necessarily has to be "query" requiring player action, it can be also used internally within server.
 // Examples:
-// - all kinds of blocking dialog windows 
-// - battle 
+// - all kinds of blocking dialog windows
+// - battle
 // - object visit
 // - hero movement
 // Queries can cause another queries, forming a stack of queries for each player. Eg: hero movement -> object visit -> dialog.
@@ -35,6 +35,7 @@ public:
 
 	virtual bool endsByPlayerAnswer() const; //query is removed after player gives answer (like dialogs)
 	virtual void onAdding(CGameHandler *gh, PlayerColor color); //called just before query is pushed on stack
+	virtual void onAdded(CGameHandler *gh, PlayerColor color); //called right after query is pushed on stack
 	virtual void onRemoval(CGameHandler *gh, PlayerColor color); //called after query is removed from stack
 	virtual void onExposure(CGameHandler *gh, QueryPtr topQuery);//called when query immediately above is removed and this is exposed (becomes top)
 	virtual std::string toString() const;
@@ -161,6 +162,18 @@ public:
 	virtual void notifyObjectAboutRemoval(const CObjectVisitQuery &objectVisit) const override;
 
 	CommanderLevelUp clu;
+};
+
+class AdventureSpellCastQuery : public CQuery
+{
+public:
+	AdventureSpellCastQuery(const CastAdvSpell & Request);
+
+	void onAdded(CGameHandler *gh, PlayerColor color) override;
+	void onExposure(CGameHandler *gh, QueryPtr topQuery) override;
+	void onRemoval(CGameHandler *gh, PlayerColor color) override;
+
+    CastAdvSpell request;
 };
 
 struct Queries

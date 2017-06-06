@@ -92,6 +92,11 @@ void CQuery::onAdding(CGameHandler *gh, PlayerColor color)
 
 }
 
+void CQuery::onAdded(CGameHandler* gh, PlayerColor color)
+{
+
+}
+
 CObjectVisitQuery::CObjectVisitQuery(const CGObjectInstance *Obj, const CGHeroInstance *Hero, int3 Tile)
 	: visitedObject(Obj), visitingHero(Hero), tile(Tile), removeObjectAfterVisit(false)
 {
@@ -170,6 +175,9 @@ void Queries::addQuery(QueryPtr query)
 {
 	for(auto player : query->players)
 		addQuery(player, query);
+
+	for(auto player : query->players)
+		query->onAdded(gh, player);
 }
 
 void Queries::addQuery(PlayerColor player, QueryPtr query)
@@ -426,4 +434,25 @@ void CHeroMovementQuery::onAdding(CGameHandler *gh, PlayerColor color)
 	pb.reason = PlayerBlocked::ONGOING_MOVEMENT;
 	pb.startOrEnd = PlayerBlocked::BLOCKADE_STARTED;
 	gh->sendAndApply(&pb);
+}
+
+AdventureSpellCastQuery::AdventureSpellCastQuery(const CastAdvSpell& Request):
+	request(Request)
+{
+    addPlayer(request.player);
+}
+
+void AdventureSpellCastQuery::onAdded(CGameHandler * gh, PlayerColor color)
+{
+	//TODO: destination select request
+}
+
+void AdventureSpellCastQuery::onExposure(CGameHandler* gh, QueryPtr topQuery)
+{
+	CQuery::onExposure(gh, topQuery);
+}
+
+void AdventureSpellCastQuery::onRemoval(CGameHandler * gh, PlayerColor color)
+{
+    gh->castSpell(gh->getHero(request.hid), request.sid, request.pos);
 }

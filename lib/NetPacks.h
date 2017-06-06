@@ -3,6 +3,7 @@
 #include "NetPacksBase.h"
 
 #include "battle/BattleAction.h"
+#include "JsonNode.h"
 #include "mapObjects/CGHeroInstance.h"
 #include "ConstTransitivePtr.h"
 #include "int3.h"
@@ -2058,16 +2059,17 @@ struct BuildBoat : public CPackForServer
 
 struct QueryReply : public CPackForServer
 {
-	QueryReply():answer(0){};
-	QueryReply(QueryID QID, ui32 Answer):qid(QID),answer(Answer){};
+	QueryReply(){};
+	QueryReply(QueryID QID, ui32 Answer):qid(QID){reply.Integer() = Answer;};
+	QueryReply(QueryID QID, const JsonNode & Reply):qid(QID), reply(Reply){};
 	QueryID qid;
-	ui32 answer; //hero and artifact id
 	PlayerColor player;
+	JsonNode reply;
 
 	bool applyGh(CGameHandler *gh);
 	template <typename Handler> void serialize(Handler &h, const int version)
 	{
-		h & qid & answer & player;
+		h & qid & player & reply;
 	}
 };
 

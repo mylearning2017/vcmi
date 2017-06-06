@@ -235,7 +235,7 @@ bool QueryReply::applyGh( CGameHandler *gh )
 		COMPLAIN_AND_RETURN("Cannot answer the query with id -1!");
 
 	assert(vstd::contains(gh->states.players, player));
-	return gh->queryReply(qid, answer, player);
+	return gh->queryReply(qid, reply, player);
 }
 
 bool MakeAction::applyGh( CGameHandler *gh )
@@ -278,7 +278,7 @@ bool DigWithHero::applyGh( CGameHandler *gh )
 bool CastAdvSpell::applyGh( CGameHandler *gh )
 {
 	ERROR_IF_NOT_OWNS(hid);
-	return gh->castSpell(gh->getHero(hid), sid, pos);
+	return gh->castSpellRequest(*this);
 }
 
 bool PlayerMessage::applyGh( CGameHandler *gh )

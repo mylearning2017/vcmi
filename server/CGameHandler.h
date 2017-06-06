@@ -200,7 +200,7 @@ public:
 	void stackTurnTrigger(const CStack *stack);
 	void handleDamageFromObstacle(const CObstacleInstance &obstacle, const CStack * curStack); //checks if obstacle is land mine and handles possible consequences
 	void removeObstacle(const CObstacleInstance &obstacle);
-	bool queryReply( QueryID qid, ui32 answer, PlayerColor player );
+	bool queryReply( QueryID qid, const JsonNode & answer, PlayerColor player );
 	bool hireHero( const CGObjectInstance *obj, ui8 hid, PlayerColor player );
 	bool buildBoat( ObjectInstanceID objid );
 	bool setFormation( ObjectInstanceID hid, ui8 formation );
@@ -232,6 +232,7 @@ public:
 	void objectVisitEnded(const CObjectVisitQuery &query);
 	void engageIntoBattle( PlayerColor player );
 	bool dig(const CGHeroInstance *h);
+	bool castSpellRequest(const CastAdvSpell & request);
 	bool castSpell(const CGHeroInstance *h, SpellID spellID, const int3 &pos);
 	void moveArmy(const CArmedInstance *src, const CArmedInstance *dst, bool allowMerging);
 

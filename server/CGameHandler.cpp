@@ -3764,11 +3764,12 @@ bool CGameHandler::hireHero(const CGObjectInstance *obj, ui8 hid, PlayerColor pl
 	return true;
 }
 
-bool CGameHandler::queryReply(QueryID qid, ui32 answer, PlayerColor player)
+bool CGameHandler::queryReply(QueryID qid, const JsonNode & answer, PlayerColor player)
 {
 	boost::unique_lock<boost::recursive_mutex> lock(gsm);
 
-	logGlobal->trace("Player %s attempts answering query %d with answer %d", player, qid, answer);
+	logGlobal->trace("Player %s attempts answering query %d with answer:", player, qid);
+	logGlobal->traceStream() << answer;
 
 	auto topQuery = queries.topQuery(player);
 	COMPLAIN_RET_FALSE_IF(!topQuery, "This player doesn't have any queries!");
@@ -3776,7 +3777,7 @@ bool CGameHandler::queryReply(QueryID qid, ui32 answer, PlayerColor player)
 	COMPLAIN_RET_FALSE_IF(!topQuery->endsByPlayerAnswer(), "This query cannot be ended by player's answer!");
 
 	if (auto dialogQuery = std::dynamic_pointer_cast<CDialogQuery>(topQuery))
-		dialogQuery->answer = answer;
+		dialogQuery->answer = answer.Integer();
 
 	queries.popQuery(topQuery);
 	return true;
@@ -5437,6 +5438,14 @@ void CGameHandler::handleAfterAttackCasting(const BattleAttack & bat)
 		sendAndApply(&victimInfo);
 		sendAndApply(&resurrectInfo);
 	}
+}
+
+bool CGameHandler::castSpellRequest(const CastAdvSpell& request)
+{
+    QueryPtr query = std::make_shared<AdventureSpellCastQuery>(request);
+    queries.addQuery(query);
+    queries.popIfTop(query);//if we already can perform cast do it now
+    return true;
 }
 
 bool CGameHandler::castSpell(const CGHeroInstance *h, SpellID spellID, const int3 &pos)
