@@ -1142,12 +1142,6 @@ struct BlockingDialog : public Query
 		soundID = 0;
 	};
 
-	void addResourceComponents(TResources resources)
-	{
-		for(TResources::nziterator i(resources); i.valid(); i++)
-			components.push_back(Component(Component::RESOURCE, i->resType, i->resVal, 0));
-	}
-
 	template <typename Handler> void serialize(Handler &h, const int version)
 	{
 		h & queryID & text & components & player & flags & soundID;
