@@ -278,7 +278,11 @@ bool DigWithHero::applyGh( CGameHandler *gh )
 bool CastAdvSpell::applyGh( CGameHandler *gh )
 {
 	ERROR_IF_NOT_OWNS(hid);
-	return gh->castSpellRequest(*this);
+
+    auto query = std::make_shared<AdventureSpellCastQuery>(gh, *this);
+    gh->queries.addQuery(query);
+    gh->queries.popIfTop(query);//if we already can perform cast do it now
+    return true;
 }
 
 bool PlayerMessage::applyGh( CGameHandler *gh )

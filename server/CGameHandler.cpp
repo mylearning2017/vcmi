@@ -5439,14 +5439,6 @@ void CGameHandler::handleAfterAttackCasting(const BattleAttack & bat)
 	}
 }
 
-bool CGameHandler::castSpellRequest(const CastAdvSpell & request)
-{
-    auto query = std::make_shared<AdventureSpellCastQuery>(this, request);
-    queries.addQuery(query);
-    queries.popIfTop(query);//if we already can perform cast do it now
-    return true;
-}
-
 bool CGameHandler::castSpell(const CGHeroInstance *h, SpellID spellID, const int3 &pos)
 {
 	const CSpell *s = spellID.toSpell();
