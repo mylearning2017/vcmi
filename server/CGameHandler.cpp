@@ -5439,17 +5439,6 @@ void CGameHandler::handleAfterAttackCasting(const BattleAttack & bat)
 	}
 }
 
-bool CGameHandler::castSpell(const CGHeroInstance *h, SpellID spellID, const int3 &pos)
-{
-	const CSpell *s = spellID.toSpell();
-
-	AdventureSpellCastParameters p;
-	p.caster = h;
-	p.pos = pos;
-
-	return s->adventureCast(spellEnv, p);
-}
-
 void CGameHandler::visitObjectOnTile(const TerrainTile &t, const CGHeroInstance * h)
 {
 	if (!t.visitableObjects.empty())

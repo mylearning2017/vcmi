@@ -10,6 +10,8 @@ class CGameHandler;
 class CObjectVisitQuery;
 class CQuery;
 class Queries;
+class CSpell;
+class SpellCastEnvironment;
 
 typedef std::shared_ptr<CQuery> QueryPtr;
 
@@ -168,16 +170,26 @@ public:
 	CommanderLevelUp clu;
 };
 
-class AdventureSpellCastQuery : public CGhQuery
+class CSpellQuery : public CQuery
 {
 public:
-	AdventureSpellCastQuery(CGameHandler * owner, const CastAdvSpell & Request);
+	CSpellQuery(Queries * Owner, const SpellCastEnvironment * SpellEnv);
+protected:
+	const SpellCastEnvironment * spellEnv;
+};
+
+class AdventureSpellCastQuery : public CSpellQuery
+{
+public:
+	AdventureSpellCastQuery(Queries * Owner, const SpellCastEnvironment * SpellEnv, const CSpell * Spell, const CGHeroInstance * Caster, const int3 & Position);
 
 	void onAdded(PlayerColor color) override;
 	void onExposure(QueryPtr topQuery) override;
 	void onRemoval(PlayerColor color) override;
 
-    CastAdvSpell request;
+	const CSpell * spell;
+	const CGHeroInstance * caster;
+	int3 position;
 };
 
 class Queries

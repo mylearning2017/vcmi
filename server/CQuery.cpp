@@ -3,6 +3,7 @@
 #include "CGameHandler.h"
 #include "../lib/battle/BattleInfo.h"
 #include "../lib/mapObjects/MiscObjects.h"
+#include "../lib/spells/ISpellMechanics.h"
 
 boost::mutex Queries::mx;
 
@@ -455,10 +456,21 @@ void CHeroMovementQuery::onAdding(PlayerColor color)
 	gh->sendAndApply(&pb);
 }
 
-AdventureSpellCastQuery::AdventureSpellCastQuery(CGameHandler * owner, const CastAdvSpell & Request):
-	CGhQuery(owner), request(Request)
+CSpellQuery::CSpellQuery(Queries * Owner, const SpellCastEnvironment * SpellEnv):
+	CQuery(Owner), spellEnv(SpellEnv)
 {
-    addPlayer(request.player);
+
+}
+
+AdventureSpellCastQuery::AdventureSpellCastQuery(Queries * Owner, const SpellCastEnvironment * SpellEnv, const CSpell * Spell, const CGHeroInstance * Caster, const int3 & Position):
+	CSpellQuery(Owner, SpellEnv), spell(Spell), caster(Caster), position(Position)
+{
+	assert(owner);
+	assert(spellEnv);
+	assert(spell);
+	assert(caster);
+
+	addPlayer(caster->getOwner());
 }
 
 void AdventureSpellCastQuery::onAdded(PlayerColor color)
@@ -473,5 +485,9 @@ void AdventureSpellCastQuery::onExposure(QueryPtr topQuery)
 
 void AdventureSpellCastQuery::onRemoval(PlayerColor color)
 {
-    gh->castSpell(gh->getHero(request.hid), request.sid, request.pos);
+	AdventureSpellCastParameters p;
+	p.caster = caster;
+	p.pos = position;
+
+	spell->adventureCast(spellEnv, p);
 }
