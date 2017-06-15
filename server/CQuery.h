@@ -43,12 +43,6 @@ public:
 	virtual void notifyObjectAboutRemoval(const CObjectVisitQuery &objectVisit) const;
 
 	virtual ~CQuery(void);
-
-
-	template <typename Handler> void serialize(Handler &h, const int version)
-	{
-		h & players & queryID;
-	}
 };
 
 std::ostream &operator<<(std::ostream &out, const CQuery &query);
