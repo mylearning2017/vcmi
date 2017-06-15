@@ -2054,7 +2054,6 @@ struct BuildBoat : public CPackForServer
 struct QueryReply : public CPackForServer
 {
 	QueryReply(){};
-	QueryReply(QueryID QID, ui32 Answer):qid(QID){reply.Integer() = Answer;};
 	QueryReply(QueryID QID, const JsonNode & Reply):qid(QID), reply(Reply){};
 	QueryID qid;
 	PlayerColor player;
