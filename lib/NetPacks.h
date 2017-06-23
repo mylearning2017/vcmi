@@ -1200,6 +1200,24 @@ struct TeleportDialog : public Query
 	}
 };
 
+struct MapObjectSelectDialog : public Query
+{
+	PlayerColor player;
+	Component icon;
+	MetaString title;
+	MetaString description;
+	std::vector<ObjectInstanceID> objects;
+
+	MapObjectSelectDialog(){};
+
+	void applyCl(CClient * cl);
+
+	template <typename Handler> void serialize(Handler & h, const int version)
+	{
+		h & queryID & player & icon & title & description & objects;
+	}
+};
+
 struct BattleInfo;
 struct BattleStart : public CPackForClient
 {

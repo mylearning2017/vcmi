@@ -99,6 +99,22 @@ void CQuery::onAdded(PlayerColor color)
 
 }
 
+void CQuery::setReply(const JsonNode & reply)
+{
+
+}
+
+bool CQuery::blockAllButReply(const CPack * pack) const
+{
+	//We accept only query replies from correct player
+	if(auto reply = dynamic_ptr_cast<QueryReply>(pack))
+	{
+		return !vstd::contains(players, reply->player);
+	}
+
+	return true;
+}
+
 CGhQuery::CGhQuery(CGameHandler * owner):
 	CQuery(&owner->queries), gh(owner)
 {
@@ -405,15 +421,15 @@ bool CDialogQuery::endsByPlayerAnswer() const
 	return true;
 }
 
-bool CDialogQuery::blocksPack(const CPack *pack) const
+bool CDialogQuery::blocksPack(const CPack * pack) const
 {
-	//We accept only query replies from correct player
-	if(auto reply = dynamic_ptr_cast<QueryReply>(pack))
-	{
-		return !vstd::contains(players, reply->player);
-	}
+	return blockAllButReply(pack);
+}
 
-	return true;
+void CDialogQuery::setReply(const JsonNode & reply)
+{
+	if(reply.getType() == JsonNode::DATA_INTEGER)
+		answer = reply.Integer();
 }
 
 CHeroMovementQuery::CHeroMovementQuery(CGameHandler * owner, const TryMoveHero & Tmh, const CGHeroInstance * Hero, bool VisitDestAfterVictory):
@@ -456,6 +472,27 @@ void CHeroMovementQuery::onAdding(PlayerColor color)
 	gh->sendAndApply(&pb);
 }
 
+CMapObjectSelectQuery::CMapObjectSelectQuery(Queries * Owner):
+	CQuery(Owner)
+{
+
+}
+
+bool CMapObjectSelectQuery::blocksPack(const CPack * pack) const
+{
+	return blockAllButReply(pack);
+}
+
+bool CMapObjectSelectQuery::endsByPlayerAnswer() const
+{
+	return true;
+}
+
+void CMapObjectSelectQuery::setReply(const JsonNode & reply)
+{
+	//TODO:
+}
+
 CSpellQuery::CSpellQuery(Queries * Owner, const SpellCastEnvironment * SpellEnv):
 	CQuery(Owner), spellEnv(SpellEnv)
 {
@@ -473,9 +510,15 @@ AdventureSpellCastQuery::AdventureSpellCastQuery(Queries * Owner, const SpellCas
 	addPlayer(caster->getOwner());
 }
 
+bool AdventureSpellCastQuery::blocksPack(const CPack * pack) const
+{
+	return true;
+}
+
 void AdventureSpellCastQuery::onAdded(PlayerColor color)
 {
 	//TODO: destination select request
+
 }
 
 void AdventureSpellCastQuery::onExposure(QueryPtr topQuery)
@@ -491,3 +534,4 @@ void AdventureSpellCastQuery::onRemoval(PlayerColor color)
 
 	spell->adventureCast(spellEnv, p);
 }
+

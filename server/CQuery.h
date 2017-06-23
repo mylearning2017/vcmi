@@ -25,9 +25,6 @@ typedef std::shared_ptr<CQuery> QueryPtr;
 // Queries can cause another queries, forming a stack of queries for each player. Eg: hero movement -> object visit -> dialog.
 class CQuery
 {
-protected:
-	Queries * owner;
-	void addPlayer(PlayerColor color);
 public:
 	std::vector<PlayerColor> players; //players that are affected (often "blocked") by query
 	QueryID queryID;
@@ -46,7 +43,13 @@ public:
 
 	virtual void notifyObjectAboutRemoval(const CObjectVisitQuery &objectVisit) const;
 
+	virtual void setReply(const JsonNode & reply);
+
 	virtual ~CQuery(void);
+protected:
+	Queries * owner;
+	void addPlayer(PlayerColor color);
+	bool blockAllButReply(const CPack * pack) const;
 };
 
 std::ostream &operator<<(std::ostream &out, const CQuery &query);
@@ -112,9 +115,11 @@ class CDialogQuery : public CGhQuery
 {
 public:
 	CDialogQuery(CGameHandler * owner);
-	boost::optional<ui32> answer;
 	virtual bool endsByPlayerAnswer() const override;
 	virtual bool blocksPack(const CPack *pack) const override;
+	void setReply(const JsonNode & reply) override;
+protected:
+	boost::optional<ui32> answer;
 };
 
 class CGarrisonDialogQuery : public CDialogQuery //used also for hero exchange dialogs
@@ -170,6 +175,16 @@ public:
 	CommanderLevelUp clu;
 };
 
+class CMapObjectSelectQuery : public CQuery
+{
+public:
+	CMapObjectSelectQuery(Queries * Owner);
+
+	bool blocksPack(const CPack * pack) const override;
+	bool endsByPlayerAnswer() const override;
+	void setReply(const JsonNode & reply) override;
+};
+
 class CSpellQuery : public CQuery
 {
 public:
@@ -178,10 +193,12 @@ protected:
 	const SpellCastEnvironment * spellEnv;
 };
 
-class AdventureSpellCastQuery : public CSpellQuery
+class AdventureSpellCastQuery  : public CSpellQuery
 {
 public:
 	AdventureSpellCastQuery(Queries * Owner, const SpellCastEnvironment * SpellEnv, const CSpell * Spell, const CGHeroInstance * Caster, const int3 & Position);
+
+	bool blocksPack(const CPack * pack) const override;
 
 	void onAdded(PlayerColor color) override;
 	void onExposure(QueryPtr topQuery) override;

@@ -3775,9 +3775,7 @@ bool CGameHandler::queryReply(QueryID qid, const JsonNode & answer, PlayerColor 
 	COMPLAIN_RET_FALSE_IF(topQuery->queryID != qid, "This player top query has different ID!");
 	COMPLAIN_RET_FALSE_IF(!topQuery->endsByPlayerAnswer(), "This query cannot be ended by player's answer!");
 
-	if (auto dialogQuery = std::dynamic_pointer_cast<CDialogQuery>(topQuery))
-		dialogQuery->answer = answer.Integer();
-
+	topQuery->setReply(answer);
 	queries.popQuery(topQuery);
 	return true;
 }
