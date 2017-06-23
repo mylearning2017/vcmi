@@ -20,6 +20,11 @@
 #include "../CPlayerState.h"
 
 ///AdventureSpellMechanics
+AdventureSpellMechanics::AdventureSpellMechanics(const CSpell * s):
+	IAdventureSpellMechanics(s)
+{
+}
+
 bool AdventureSpellMechanics::adventureCast(const SpellCastEnvironment * env, AdventureSpellCastParameters & parameters) const
 {
 	if(!owner->isAdventureSpell())
@@ -75,7 +80,7 @@ bool AdventureSpellMechanics::adventureCast(const SpellCastEnvironment * env, Ad
 	return false;
 }
 
-ESpellCastResult AdventureSpellMechanics::applyAdventureEffects(const SpellCastEnvironment * env, AdventureSpellCastParameters & parameters) const
+ESpellCastResult AdventureSpellMechanics::applyAdventureEffects(const SpellCastEnvironment * env, const AdventureSpellCastParameters & parameters) const
 {
 	if(owner->hasEffects())
 	{
@@ -105,7 +110,12 @@ ESpellCastResult AdventureSpellMechanics::applyAdventureEffects(const SpellCastE
 }
 
 ///SummonBoatMechanics
-ESpellCastResult SummonBoatMechanics::applyAdventureEffects(const SpellCastEnvironment * env, AdventureSpellCastParameters & parameters) const
+SummonBoatMechanics::SummonBoatMechanics(const CSpell * s):
+	AdventureSpellMechanics(s)
+{
+}
+
+ESpellCastResult SummonBoatMechanics::applyAdventureEffects(const SpellCastEnvironment * env, const AdventureSpellCastParameters & parameters) const
 {
 	int3 summonPos = parameters.caster->bestLocation();
 	if(summonPos.x < 0)
@@ -177,7 +187,12 @@ ESpellCastResult SummonBoatMechanics::applyAdventureEffects(const SpellCastEnvir
 }
 
 ///ScuttleBoatMechanics
-ESpellCastResult ScuttleBoatMechanics::applyAdventureEffects(const SpellCastEnvironment* env, AdventureSpellCastParameters& parameters) const
+ScuttleBoatMechanics::ScuttleBoatMechanics(const CSpell * s):
+	AdventureSpellMechanics(s)
+{
+}
+
+ESpellCastResult ScuttleBoatMechanics::applyAdventureEffects(const SpellCastEnvironment * env, const AdventureSpellCastParameters & parameters) const
 {
 	const int schoolLevel = parameters.caster->getSpellSchoolLevel(owner);
 	//check if spell works at all
@@ -212,7 +227,12 @@ ESpellCastResult ScuttleBoatMechanics::applyAdventureEffects(const SpellCastEnvi
 }
 
 ///DimensionDoorMechanics
-ESpellCastResult DimensionDoorMechanics::applyAdventureEffects(const SpellCastEnvironment* env, AdventureSpellCastParameters& parameters) const
+DimensionDoorMechanics::DimensionDoorMechanics(const CSpell * s):
+	AdventureSpellMechanics(s)
+{
+}
+
+ESpellCastResult DimensionDoorMechanics::applyAdventureEffects(const SpellCastEnvironment * env, const AdventureSpellCastParameters & parameters) const
 {
 	if(!env->getMap()->isInTheMap(parameters.pos))
 	{
@@ -280,7 +300,12 @@ ESpellCastResult DimensionDoorMechanics::applyAdventureEffects(const SpellCastEn
 }
 
 ///TownPortalMechanics
-ESpellCastResult TownPortalMechanics::applyAdventureEffects(const SpellCastEnvironment * env, AdventureSpellCastParameters& parameters) const
+TownPortalMechanics::TownPortalMechanics(const CSpell * s):
+	AdventureSpellMechanics(s)
+{
+}
+
+ESpellCastResult TownPortalMechanics::applyAdventureEffects(const SpellCastEnvironment * env, const AdventureSpellCastParameters & parameters) const
 {
 	const CGTownInstance * destination = nullptr;
 	const int movementCost = GameConstants::BASE_MOVEMENT_COST * ((parameters.caster->getSpellSchoolLevel(owner) >= 3) ? 2 : 3);
@@ -320,7 +345,7 @@ ESpellCastResult TownPortalMechanics::applyAdventureEffects(const SpellCastEnvir
     else if(env->getMap()->isInTheMap(parameters.pos))
 	{
 		const TerrainTile & tile = env->getMap()->getTile(parameters.pos);
-		if (tile.visitableObjects.empty() || tile.visitableObjects.back()->ID != Obj::TOWN)
+		if(tile.visitableObjects.empty() || tile.visitableObjects.back()->ID != Obj::TOWN)
 		{
 			env->complain("No town at destination tile");
 			return ESpellCastResult::ERROR;
@@ -348,7 +373,7 @@ ESpellCastResult TownPortalMechanics::applyAdventureEffects(const SpellCastEnvir
 			return ESpellCastResult::ERROR;
 		}
 
-		if (destination->visitingHero)
+		if(destination->visitingHero)
 		{
 			env->complain("Can't teleport to occupied town!");
 			return ESpellCastResult::ERROR;
@@ -360,7 +385,7 @@ ESpellCastResult TownPortalMechanics::applyAdventureEffects(const SpellCastEnvir
 		return ESpellCastResult::ERROR;
 	}
 
-	if(env->moveHero(parameters.caster->id, destination->visitablePos() + parameters.caster->getVisitableOffset() ,1))
+	if(env->moveHero(parameters.caster->id, destination->visitablePos() + parameters.caster->getVisitableOffset(), 1))
 	{
 		SetMovePoints smp;
 		smp.hid = parameters.caster->id;
@@ -370,7 +395,7 @@ ESpellCastResult TownPortalMechanics::applyAdventureEffects(const SpellCastEnvir
 	return ESpellCastResult::OK;
 }
 
-const CGTownInstance * TownPortalMechanics::findNearestTown(const SpellCastEnvironment* env, AdventureSpellCastParameters& parameters, const std::vector <const CGTownInstance*> & pool) const
+const CGTownInstance * TownPortalMechanics::findNearestTown(const SpellCastEnvironment * env, const AdventureSpellCastParameters & parameters, const std::vector <const CGTownInstance *> & pool) const
 {
 	if(pool.empty())
 		return nullptr;
@@ -391,7 +416,7 @@ const CGTownInstance * TownPortalMechanics::findNearestTown(const SpellCastEnvir
 	return *nearest;
 }
 
-std::vector <const CGTownInstance*> TownPortalMechanics::getPossibleTowns(const SpellCastEnvironment* env, AdventureSpellCastParameters& parameters) const
+std::vector <const CGTownInstance*> TownPortalMechanics::getPossibleTowns(const SpellCastEnvironment * env, const AdventureSpellCastParameters & parameters) const
 {
 	std::vector <const CGTownInstance*> ret;
 
@@ -407,7 +432,13 @@ std::vector <const CGTownInstance*> TownPortalMechanics::getPossibleTowns(const 
 	return ret;
 }
 
-ESpellCastResult ViewMechanics::applyAdventureEffects(const SpellCastEnvironment * env, AdventureSpellCastParameters & parameters) const
+///ViewMechanics
+ViewMechanics::ViewMechanics(const CSpell * s):
+	AdventureSpellMechanics(s)
+{
+}
+
+ESpellCastResult ViewMechanics::applyAdventureEffects(const SpellCastEnvironment * env, const AdventureSpellCastParameters & parameters) const
 {
 	ShowWorldViewEx pack;
 
@@ -434,13 +465,25 @@ ESpellCastResult ViewMechanics::applyAdventureEffects(const SpellCastEnvironment
 	return ESpellCastResult::OK;
 }
 
+///ViewAirMechanics
+ViewAirMechanics::ViewAirMechanics(const CSpell * s):
+	ViewMechanics(s)
+{
+}
+
 bool ViewAirMechanics::filterObject(const CGObjectInstance * obj, const int spellLevel) const
 {
-	return (obj->ID == Obj::ARTIFACT) || (spellLevel>1 && obj->ID == Obj::HERO) || (spellLevel>2 && obj->ID == Obj::TOWN);
+	return (obj->ID == Obj::ARTIFACT) || (spellLevel > 1 && obj->ID == Obj::HERO) || (spellLevel > 2 && obj->ID == Obj::TOWN);
+}
+
+///ViewEarthMechanics
+ViewEarthMechanics::ViewEarthMechanics(const CSpell * s):
+	ViewMechanics(s)
+{
 }
 
 bool ViewEarthMechanics::filterObject(const CGObjectInstance * obj, const int spellLevel) const
 {
-	return (obj->ID == Obj::RESOURCE) || (spellLevel>1 && obj->ID == Obj::MINE);
+	return (obj->ID == Obj::RESOURCE) || (spellLevel > 1 && obj->ID == Obj::MINE);
 }
 
