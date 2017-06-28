@@ -207,6 +207,7 @@ public:
 	const CSpell * spell;
 	const CGHeroInstance * caster;
 	int3 position;
+	bool requiresPositions;
 };
 
 class Queries

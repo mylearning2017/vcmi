@@ -500,7 +500,7 @@ CSpellQuery::CSpellQuery(Queries * Owner, const SpellCastEnvironment * SpellEnv)
 }
 
 AdventureSpellCastQuery::AdventureSpellCastQuery(Queries * Owner, const SpellCastEnvironment * SpellEnv, const CSpell * Spell, const CGHeroInstance * Caster, const int3 & Position):
-	CSpellQuery(Owner, SpellEnv), spell(Spell), caster(Caster), position(Position)
+	CSpellQuery(Owner, SpellEnv), spell(Spell), caster(Caster), position(Position), requiresPositions(false)
 {
 	assert(owner);
 	assert(spellEnv);
